@@ -1,0 +1,2 @@
+Date,Result,Doc1 Path,Doc2 Path,Doc1 Additional Content,Doc2 Additional Content,Out of Order
+2020-10-26 15:56:07.463800,Partial match,comp1.pdf,diff3.pdf,N/A,N/A,"['trying some different spacing', 'and different fonts', 'to make sure all is well']"

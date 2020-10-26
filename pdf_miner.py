@@ -7,6 +7,8 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
 import re
+import csv
+from datetime import datetime
 
 #ap = argparse.ArgumentParser()
 #ap.add_argument("-1", "--doc1", required = True, help = "Path to the first document")
@@ -27,6 +29,9 @@ def process_document(path):
 
 #Process string for comparison
 def process_string(string_io):
+    perfect_match = False
+    partial_match = False
+
     #Convert to a Python string
     string = str(string_io.getvalue())
 
@@ -45,17 +50,19 @@ def process_string(string_io):
 
     return string
 
-def compare_strings(string1, string2):
+def compare_documents(path1, path2):
+    #Get output string for each document
+    string1 = process_document(path1)
+    string2 = process_document(path2)
+
     #Process the strings to be matched
     string1_processed = process_string(string1)
     string2_processed = process_string(string2)
 
     #Check for a perfect match
-    perfect_match = False
     if string1_processed == string2_processed:
         perfect_match = True
-        print("Perfect Match!")
-        return True
+        return [[datetime.now(), "Perfect match", path1, path2, "N/A", "N/A", "N/A"]]
 
     #Split the strings into a list of sentences
     string1_list = string1_processed.split(".")    
@@ -71,27 +78,31 @@ def compare_strings(string1, string2):
     for string in string2_list:
         string2_list_trimmed.append(string.strip())
     
+    #Find words contained in list 1 that are not contained in list 2
     missing_sentences1 = []
-
-    print("MISSING FROM DOC 1:")
     for string in string1_list_trimmed:
         if string not in string2_list_trimmed:
-            print(string)
             missing_sentences1.append(string)
 
+    #Find words contained in list 2 that are not conta
     missing_sentences2 = []
-
-    print("MISSING FROM DOC 1:")
     for string in string2_list_trimmed:
         if string not in string1_list_trimmed:
-            print(string)
             missing_sentences2.append(string)
 
     #If missing sentence lists are empty, check for order
+    out_of_order = []
     if len(missing_sentences1) == 0 and len(missing_sentences2) == 0:
-        for string in string1_list_trimmed:
-                
+        partial_match = True
+        for i in range(len(string1_list_trimmed)):
+            if string1_list_trimmed[i] != string2_list_trimmed[i]:
+                out_of_order.append(string1_list_trimmed[i])
+        return [[datetime.now(), "Partial match", path1, path2, "N/A", "N/A", out_of_order]]
+    
+    return [[datetime.now(), "No match", path1, path2, missing_sentences1, missing_sentences2, "N/A"]]
 
-output_string1 = process_document("comp1.pdf")
-output_string2 = process_document("comp3.pdf")
-compare_strings(output_string1, output_string2)
+results = compare_documents("comp1.pdf", "diff3.pdf")
+
+with open('results.csv', 'a') as file:
+    writer = csv.writer(file)
+    writer.writerows(results)
