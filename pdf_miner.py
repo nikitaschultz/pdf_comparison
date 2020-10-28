@@ -9,7 +9,10 @@ from pdfminer.pdfparser import PDFParser
 import re
 import csv
 from datetime import datetime
-import docx
+import docx2txt
+from docx2pdf import convert
+from unidecode import unidecode
+import os
 
 #ap = argparse.ArgumentParser()
 #ap.add_argument("-1", "--doc1", required = True, help = "Path to the first document")
@@ -30,11 +33,11 @@ def process_pdf(path):
 
 #Method for processing a docx to a string
 def process_docx(path):
-    doc = docx.Document(path)
-    full_text = []
-    for para in doc.paragraphs: 
-        full_text.append(para.text)
-    output_string = ' '.join(full_text)
+    convert(path)
+    new_path = path.replace("docx", "pdf")
+    print(new_path)
+    output_string = process_pdf(new_path)
+    os.remove(new_path)
     return output_string
 
 #Open and process document to return a StringIO Object
@@ -53,11 +56,14 @@ def process_document(path):
 #Process string for comparison
 def process_string(string):
     #Replace additional lines and end all sentences with a fullstop for splitting
-    string.replace("\n", "")
-    string.replace("\r\n", "")
-    string.replace("\x0c", "")
-    string.replace("?", ".")
-    string.replace("!", ".")
+    string = string.replace("\n", "")
+    string = string.replace("\r\n", "")
+    string = string.replace("\x0c", "")
+    string = string.replace("\uf0b7", "")
+    string = string.replace("?", ".")
+    string = string.replace("!", ".")
+    string = string.encode("ascii", errors="ignore").decode()
+    print(string)
 
     #Convert to lowercase
     string = string.lower()
@@ -84,6 +90,11 @@ def compare_documents(path1, path2):
     string1_processed = process_string(string1)
     string2_processed = process_string(string2)
 
+    #print("PDF")
+    #print(string1_processed)
+    #print("WORD")
+    #print(string2_processed)
+    
     #Check for a perfect match
     if string1_processed == string2_processed:
         print("The content of the files is a perfect match.")
