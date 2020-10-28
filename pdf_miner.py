@@ -18,6 +18,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-prog", "--prog", required = True, help = "Which program to run? 1. Check for perfect match 2. Check for specific difference")
 ap.add_argument("-1", "--path1", required = True, help = "The path to file 1.")
 ap.add_argument("-2", "--path2", required = True, help = "The path to file 2.")
+ap.add_argument("-except", "--exception", help = "The text to be excepted (only in program 2).")
 args = vars(ap.parse_args())
 
 #Method for processing a pdf to a string
@@ -74,6 +75,19 @@ def process_string(string):
 
     return string
 
+def trim_list(list):
+    trimmed_list = []
+    for string in list:
+        trimmed_list.append(string.strip())
+    return trimmed_list
+
+def find_additional_content(list1, list2):
+    additional_content = []
+    for item in list1:
+        if string not in list2:
+            additional_content.append(string)
+    return additional_content
+
 def compare_documents(path1, path2):
     #Get output string for each document
     status1, string1 = process_document(path1)
@@ -81,11 +95,11 @@ def compare_documents(path1, path2):
 
     if status1 != True:
         print(string1 + " is not a valid file extension.  Please ensure both documents are PDF or Word documents.")
-        return ("Error", "Invalid file type")
+        return "Error", "Invalid File Type"
 
     if status2 != True:
         print(string2 + " is not a valid file extension.  Please ensure both documents are PDF or Word documents.")
-        return ("Error", "Invalid file type")
+        return "Error", "Invalid File Type"
 
     #Process the strings to be matched
     string1_processed = process_string(string1)
@@ -94,33 +108,21 @@ def compare_documents(path1, path2):
     #Check for a perfect match
     if string1_processed == string2_processed:
         print("The content of the files is a perfect match.")
-        return ("Pass", "")
+        return "Pass", ""
 
     #Split the strings into a list of sentences
     string1_list = string1_processed.split(".")    
     string2_list = string2_processed.split(".")
 
     #Trim each sentence in each list of leading and trailing whitespace
-    string1_list_trimmed = []
-    string2_list_trimmed = []
-
-    for string in string1_list:
-        string1_list_trimmed.append(string.strip())
-    
-    for string in string2_list:
-        string2_list_trimmed.append(string.strip())
+    string1_list_trimmed = trim_list(string1_list)
+    string2_list_trimmed = trim_list(string2_list)
 
     #Find words contained in list 1 that are not contained in list 2
-    missing_sentences1 = []
-    for string in string1_list_trimmed:
-        if string not in string2_list_trimmed:
-            missing_sentences1.append(string)
+    missing_sentences1 = find_additional_content(string1_list_trimmed, string2_list_trimmed)
 
     #Find words contained in list 2 that are not contained in list 1
-    missing_sentences2 = []
-    for string in string2_list_trimmed:
-        if string not in string1_list_trimmed:
-            missing_sentences2.append(string)
+    missing_sentences2 = find_additional_content(string2_list_trimmed, string1_list_trimmed)
 
     #If missing sentence lists are empty, check for order
     out_of_order = []
@@ -130,10 +132,10 @@ def compare_documents(path1, path2):
             if string1_list_trimmed[i] != string2_list_trimmed[i]:
                 out_of_order.append(string1_list_trimmed[i])
         print("The content of the files is a partial match.  The content is the comparable, however maybe out of order or repeated in one document.  See results.csv for details.")
-        return ("Fail", "Partial match")
+        return "Fail", "Partial Match"
     
     print("The content of the files is not a match.  Please see results.csv for details.")
-    return ("Fail", "No match")
+    return "Fail", "No Match"
 
 def write_to_xml(results, start_time):
     total_time = time.time() - start_time
@@ -156,4 +158,4 @@ if(args["prog"] == "1"):
     write_to_xml(results, start_time)
 
 if(args["prog"] == "2"):
-    print("program 2 selected")
+    print(args["except"])
