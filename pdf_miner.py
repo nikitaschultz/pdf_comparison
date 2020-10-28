@@ -1,5 +1,4 @@
 from io import StringIO
-
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfdocument import PDFDocument
@@ -7,12 +6,12 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
 import re
-import csv
-from datetime import datetime
-import docx2txt
+import time
 from docx2pdf import convert
 from unidecode import unidecode
 import os
+from junit_xml import TestSuite, TestCase
+from xml.etree import ElementTree
 
 #ap = argparse.ArgumentParser()
 #ap.add_argument("-1", "--doc1", required = True, help = "Path to the first document")
@@ -63,7 +62,6 @@ def process_string(string):
     string = string.replace("?", ".")
     string = string.replace("!", ".")
     string = string.encode("ascii", errors="ignore").decode()
-    print(string)
 
     #Convert to lowercase
     string = string.lower()
@@ -79,26 +77,21 @@ def compare_documents(path1, path2):
     status2, string2 = process_document(path2)
 
     if status1 != True:
-        print(string1 + "is not a valid file extension.  Please ensure both documents are PDF or Word documents.")
-        return None
+        print(string1 + " is not a valid file extension.  Please ensure both documents are PDF or Word documents.")
+        return ("Error", "Invalid file type")
 
     if status2 != True:
-        print(string2 + "is not a valid file extension.  Please ensure both documents are PDF or Word documents.")
-        return None
+        print(string2 + " is not a valid file extension.  Please ensure both documents are PDF or Word documents.")
+        return ("Error", "Invalid file type")
 
     #Process the strings to be matched
     string1_processed = process_string(string1)
     string2_processed = process_string(string2)
-
-    #print("PDF")
-    #print(string1_processed)
-    #print("WORD")
-    #print(string2_processed)
     
     #Check for a perfect match
     if string1_processed == string2_processed:
         print("The content of the files is a perfect match.")
-        return [[datetime.now(), "Perfect match", path1, path2, "N/A", "N/A", "N/A"]]
+        return ("Pass", "")
 
     #Split the strings into a list of sentences
     string1_list = string1_processed.split(".")    
@@ -113,7 +106,7 @@ def compare_documents(path1, path2):
     
     for string in string2_list:
         string2_list_trimmed.append(string.strip())
-    
+
     #Find words contained in list 1 that are not contained in list 2
     missing_sentences1 = []
     for string in string1_list_trimmed:
@@ -134,13 +127,28 @@ def compare_documents(path1, path2):
             if string1_list_trimmed[i] != string2_list_trimmed[i]:
                 out_of_order.append(string1_list_trimmed[i])
         print("The content of the files is a partial match.  The content is the comparable, however maybe out of order or repeated in one document.  See results.csv for details.")
-        return [[datetime.now(), "Partial match", path1, path2, "N/A", "N/A", out_of_order]]
+        return ("Fail", "Partial match")
     
     print("The content of the files is not a match.  Please see results.csv for details.")
-    return [[datetime.now(), "No match", path1, path2, missing_sentences1, missing_sentences2, "N/A"]]
+    return ("Fail", "No match")
 
-results = compare_documents("test_pdf_document.pdf", "test_word_document.docx")
+def write_to_xml(results, start_time):
+    total_time = time.time() - start_time
 
-with open('results.csv', 'a') as file:
-    writer = csv.writer(file)
-    writer.writerows(results)
+    test_cases = [TestCase("Test for Perfect Match", "", total_time, "", "")]
+
+    if results[0] == "Fail":
+        test_cases[0].add_failure_info(results[1])
+
+    if results[0] == "Error":
+        test_cases[0].add_error_info(results[1])
+
+    ts = TestSuite("Test suite", test_cases)
+    with open('output.xml', 'w') as f:
+        TestSuite.to_file(f, [ts])
+
+start_time = time.time()
+
+results = compare_documents("results.csv", "diff2.pdf")
+
+write_to_xml(results, start_time)
