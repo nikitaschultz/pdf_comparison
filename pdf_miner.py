@@ -9,13 +9,14 @@ from pdfminer.pdfparser import PDFParser
 import re
 import csv
 from datetime import datetime
+import docx
 
 #ap = argparse.ArgumentParser()
 #ap.add_argument("-1", "--doc1", required = True, help = "Path to the first document")
 #args = vars(ap.parse_args())
 
-#Open and process document to return a StringIO Object
-def process_document(path):
+#Method for processing a pdf to a string
+def process_pdf(path):
     output_string = StringIO()
     with open(path, 'rb') as in_file:
         parser = PDFParser(in_file)
@@ -25,16 +26,32 @@ def process_document(path):
         interpreter = PDFPageInterpreter(rsrcmgr, device)
         for page in PDFPage.create_pages(doc):
             interpreter.process_page(page)
-    return output_string 
+    return str(output_string.getvalue()) 
+
+#Method for processing a docx to a string
+def process_docx(path):
+    doc = docx.Document(path)
+    full_text = []
+    for para in doc.paragraphs: 
+        full_text.append(para.text)
+    output_string = ' '.join(full_text)
+    return output_string
+
+#Open and process document to return a StringIO Object
+def process_document(path):
+    path_list = path.split('.')
+    file_extension = path_list[-1]
+    
+    if(file_extension == "pdf"):
+        return True, process_pdf(path)
+    
+    if(file_extension == "docx"):
+        return True, process_docx(path)
+    
+    return False, file_extension
 
 #Process string for comparison
-def process_string(string_io):
-    perfect_match = False
-    partial_match = False
-
-    #Convert to a Python string
-    string = str(string_io.getvalue())
-
+def process_string(string):
     #Replace additional lines and end all sentences with a fullstop for splitting
     string.replace("\n", "")
     string.replace("\r\n", "")
@@ -52,8 +69,16 @@ def process_string(string_io):
 
 def compare_documents(path1, path2):
     #Get output string for each document
-    string1 = process_document(path1)
-    string2 = process_document(path2)
+    status1, string1 = process_document(path1)
+    status2, string2 = process_document(path2)
+
+    if status1 != True:
+        print(string1 + "is not a valid file extension.  Please ensure both documents are PDF or Word documents.")
+        return None
+
+    if status2 != True:
+        print(string2 + "is not a valid file extension.  Please ensure both documents are PDF or Word documents.")
+        return None
 
     #Process the strings to be matched
     string1_processed = process_string(string1)
@@ -61,7 +86,7 @@ def compare_documents(path1, path2):
 
     #Check for a perfect match
     if string1_processed == string2_processed:
-        perfect_match = True
+        print("The content of the files is a perfect match.")
         return [[datetime.now(), "Perfect match", path1, path2, "N/A", "N/A", "N/A"]]
 
     #Split the strings into a list of sentences
@@ -84,7 +109,7 @@ def compare_documents(path1, path2):
         if string not in string2_list_trimmed:
             missing_sentences1.append(string)
 
-    #Find words contained in list 2 that are not conta
+    #Find words contained in list 2 that are not contained in list 1
     missing_sentences2 = []
     for string in string2_list_trimmed:
         if string not in string1_list_trimmed:
@@ -97,11 +122,13 @@ def compare_documents(path1, path2):
         for i in range(len(string1_list_trimmed)):
             if string1_list_trimmed[i] != string2_list_trimmed[i]:
                 out_of_order.append(string1_list_trimmed[i])
+        print("The content of the files is a partial match.  The content is the comparable, however maybe out of order or repeated in one document.  See results.csv for details.")
         return [[datetime.now(), "Partial match", path1, path2, "N/A", "N/A", out_of_order]]
     
+    print("The content of the files is not a match.  Please see results.csv for details.")
     return [[datetime.now(), "No match", path1, path2, missing_sentences1, missing_sentences2, "N/A"]]
 
-results = compare_documents("comp1.pdf", "diff3.pdf")
+results = compare_documents("test_pdf_document.pdf", "test_word_document.docx")
 
 with open('results.csv', 'a') as file:
     writer = csv.writer(file)
