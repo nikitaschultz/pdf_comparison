@@ -1,8 +1,6 @@
 <?xml version="1.0" ?>
-<testsuites disabled="0" errors="1" failures="0" tests="1" time="0.051056623458862305">
-	<testsuite disabled="0" errors="1" failures="0" name="Test suite" skipped="0" tests="1" time="0.051056623458862305">
-		<testcase name="Test for Perfect Match" time="0.051057">
-			<error type="error" message="Invalid file type"/>
-		</testcase>
+<testsuites disabled="0" errors="0" failures="0" tests="1" time="0.12439560890197754">
+	<testsuite disabled="0" errors="0" failures="0" name="Test suite" skipped="0" tests="1" time="0.12439560890197754">
+		<testcase name="Test for Perfect Match" time="0.124396"/>
 	</testsuite>
 </testsuites>

@@ -12,10 +12,13 @@ from unidecode import unidecode
 import os
 from junit_xml import TestSuite, TestCase
 from xml.etree import ElementTree
+import argparse
 
-#ap = argparse.ArgumentParser()
-#ap.add_argument("-1", "--doc1", required = True, help = "Path to the first document")
-#args = vars(ap.parse_args())
+ap = argparse.ArgumentParser()
+ap.add_argument("-prog", "--prog", required = True, help = "Which program to run? 1. Check for perfect match 2. Check for specific difference")
+ap.add_argument("-1", "--path1", required = True, help = "The path to file 1.")
+ap.add_argument("-2", "--path2", required = True, help = "The path to file 2.")
+args = vars(ap.parse_args())
 
 #Method for processing a pdf to a string
 def process_pdf(path):
@@ -147,8 +150,10 @@ def write_to_xml(results, start_time):
     with open('output.xml', 'w') as f:
         TestSuite.to_file(f, [ts])
 
-start_time = time.time()
+if(args["prog"] == "1"):
+    start_time = time.time()
+    results = compare_documents(args["path1"], args["path2"])
+    write_to_xml(results, start_time)
 
-results = compare_documents("results.csv", "diff2.pdf")
-
-write_to_xml(results, start_time)
+if(args["prog"] == "2"):
+    print("program 2 selected")

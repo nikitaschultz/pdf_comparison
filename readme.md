@@ -6,7 +6,7 @@
 - Run pdf_miner.py in the command line, with two additional arguments:
  - "-1" with the path to the first pdf
  - "-2" with the path to the second pdf
-- results.csv will be updated with the results of the run 
+- The results will be output to output.xml 
 
 ## Reading the Results
 ### Full Match
