@@ -1,8 +1,6 @@
 <?xml version="1.0" ?>
-<testsuites disabled="0" errors="0" failures="1" tests="1" time="0.11446404457092285">
-	<testsuite disabled="0" errors="0" failures="1" name="Test suite" skipped="0" tests="1" time="0.11446404457092285">
-		<testcase name="Test for Perfect Match" time="0.114464">
-			<failure type="failure" message="No Match"/>
-		</testcase>
+<testsuites disabled="0" errors="0" failures="0" tests="1" time="2.8077871799468994">
+	<testsuite disabled="0" errors="0" failures="0" name="Test suite" skipped="0" tests="1" time="2.8077871799468994">
+		<testcase name="Test for Perfect Match" time="2.807787"/>
 	</testsuite>
 </testsuites>
